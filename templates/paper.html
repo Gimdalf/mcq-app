@@ -1,0 +1,81 @@
+<head>
+	<title>{{paper.name}}</title>
+	<meta name = "viewport" content = "width = device-width, initial-scale = 1">
+	<link rel="stylesheet" href="{{url_for('static',filename='css/materialize.css')}}">
+	<script type = "text/javascript"
+		 src = "https://code.jquery.com/jquery-2.1.1.min.js"></script>           
+	<script src = "https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.3/js/materialize.min.js">
+	</script>
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<body>
+
+<div class = "container">
+	<h2> {{ paper.name }}</h2>
+	<a class = "waves-effect waves-light btn-small "href = "{{ url_for('newStudent', name = paper.name) }}">New student</a>
+
+	<ul class="collapsible" data-collapsible="expandable">
+		{% for student_key in student_keys %}
+			<li> 
+				<div class ="collapsible-header">{{ students[student_key]['name'] }}: {{students[student_key]['mark']}}/{{no_of_questions[0]}}</div>
+				<div class ="collapsible-body">
+					<div class="row">
+						<a class="col waves-effect waves-light btn-small" style=" margin-right: 5px" href = "{{url_for('editStudent', name = paper.name, student = students[student_key]['name']) }}">Edit {{students[student_key]['name']}}</a>
+						<a class="col waves-effect waves-light btn-small" href ="{{url_for('viewStudent', name = paper.name, student = students[student_key]['name'])}}">Print</a>
+						<a class="waves-effect waves-light btn-small red right" href = "{{ url_for('deleteStudent', name = paper.name, student = students[student_key]['name']) }}">Delete {{students[student_key]['name']}}</a>
+					</div>
+					<div>
+						<table style="padding: 0px">
+						{% for i in no_of_questions[1] %}
+							{% if (i+1) % 4 == 1 %}
+							<tr class="ans" style="border: 1px solid lightgray">
+							{% endif %}
+								<td class = "ans" style="border-left: 1px solid lightgray">{{i+1}}</td>
+								<td class = "ans">{{students[student_key]['student_answers'][i]}}</td>
+								<td class = "ans">{{answers[i]}}</td>
+								<td class = "ans"style="border-right: 1px solid lightgray"><i class="material-icons">
+								{% if students[student_key]['student_answers'][i] == answers[i] %}check{% else %}close{% endif %}</i></td>
+							{% if (i+1) % 4 == 0 %}
+							</tr>
+							{% endif %}
+						{% endfor %}
+						</table>
+					</div>
+				<div>
+				</div>
+				</div>
+			</li>
+		{% endfor %}
+	</ul>
+		<div class="row section">
+	<div class="col s6">
+		<a href="{{url_for('index')}}" class="waves-effect waves-light btn-small blue">Index</a>
+		<a href="{{url_for('paperAnswers', name=paper.name, mode='edit')}}" class="waves-effect waves-light btn-small blue">Edit</a>
+		<a class = "waves-effect waves-light btn-small blue "href = "{{ url_for('printPaper', name = paper.name) }}">Print all</a>
+	</div>
+	<table class ="highlight centered">
+		<tr>
+			<td>No.</td>
+			{% for i in paper.choices %}
+				<td>{{i}}</td>
+			{% endfor %}
+		</tr>
+		{% for i in range(len(processed_questions)) %}
+			<tr>
+				<td>{{i+1}}</td>
+					{% for j in paper.choices %}
+						<td>
+						{% if len(students) == 0 %}
+							0 (0)
+						{% elif answers[i] == j %}
+							<font color="green">{{ round(processed_questions[i][j]/len(students)*100, 1) }}% ({{processed_questions[i][j]}})</font>
+						{% else %}
+							{{ round(processed_questions[i][j]/len(students)*100, 1)}}% ({{processed_questions[i][j]}})
+						{% endif %}
+					{% endfor %}
+				</td>
+			</tr>
+		{% endfor %}
+	</table>
+
+	</div>
+</div>

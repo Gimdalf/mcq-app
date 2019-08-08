@@ -1,0 +1,43 @@
+<head>
+	<title>Input answers</title>
+	<meta name = "viewport" content = "width = device-width, initial-scale = 1">
+	<link rel="stylesheet" href="{{url_for('static',filename='css/materialize.css')}}">
+	<script type = "text/javascript"
+         src = "https://code.jquery.com/jquery-2.1.1.min.js"></script>           
+    <script src = "https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.3/js/materialize.min.js">
+    </script>
+</head>
+<body>
+<div class = "container">
+	{% if form.errors %}
+	<div class = "section">
+    <ul class="errors">
+        {% for field_name, field_errors in form.errors|dictsort if field_errors %}
+            {% for error in field_errors %}
+                <li>{{ form[field_name].label }}: {{ error }}</li>
+            {% endfor %}
+        {% endfor %}
+
+    </ul>
+	</div>
+	{% endif %}
+	<h3>Input answers</h3>
+	<form method = "POST">
+		<div class="row">
+			{% for i in questions %}
+			<div class ="input-field col s3">
+				<div>
+					<label>{{getattr(form, i).label}}</label>
+				</div>
+				{{getattr(form, i)}}
+			</div>
+			{% endfor %}
+			{{form.hidden_tag()}}
+		</div>
+		<div class = "row">
+			<a href="{{ url_for('paperView', name=name) }}" class = "waves-effect waves-light btn-small">Back</a>
+			{{form.button(class="btn-small")}}
+		</div>
+	</form>
+</div>
+</body>
