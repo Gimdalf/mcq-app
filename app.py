@@ -53,6 +53,7 @@ class Student(db.Model):
 		else:
 			return None	
 
+db.create_all()
 class InitializePaper(FlaskForm):
 	name = StringField('Name of paper', validators = [DataRequired(), NoneOf(list(map(lambda x: x.name, Paper.query.all())))])
 	qn = IntegerField('Number of questions in paper', validators = [DataRequired()])
