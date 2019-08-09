@@ -142,7 +142,7 @@ def newStudent(name):
 	no_of_questions = paper.no_of_questions
 	setattr(StudentForm, "name", StringField('Name of student', validators = [DataRequired(), NoneOf(list(map(lambda x: x.name, paper.students)))]))
 	for i in range(1, paper.no_of_questions+1):
-		setattr(StudentForm, str(i), StringField("Q{}".format(i), validators =[Length(max=1)]))
+		setattr(StudentForm, str(i), StringField("Q{}".format(i), validators =[Length(max=1), AnyOf(merger(paper.choices.lower(), paper.choices.upper()))]))
 	form = StudentForm()
 	if form.validate_on_submit():
 		#reconversion of student's answers into integer value for storage
@@ -165,7 +165,7 @@ def editStudent(name, student):
 #Edit student answers doesn't work
 	if form.validate_on_submit():
 		db.session.delete(student)
-		db.session.add(Student(name = form.name.data, paper_id = name, answers = {key: getattr(form,str(i).upper()).data for key in range(1, paper.no_of_questions+1)}))
+		db.session.add(Student(name = form.name.data, paper_id = name, answers = {key: getattr(form,str(i)).data.upper() for key in range(1, paper.no_of_questions+1)}))
 		db.session.commit()
 		return redirect(url_for('paperView', name = name))
 	return render_template('createStudent.html', form = form, name = name, questions = list(map(lambda x: str(x),range(1, paper.no_of_questions+1))), getattr = getattr)
@@ -197,4 +197,4 @@ def printPaper(name):
 	return render_pdf(HTML(string = html))
 
 # To do:
-# remove case sensitivity
+# accept blanks
