@@ -1,10 +1,12 @@
-from flask import Flask, request, render_template, url_for, redirect, send_file
+from flask import Flask, request, render_template, url_for, redirect, send_file, make_response
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, IntegerField
 from wtforms.validators import DataRequired, AnyOf, Length, NoneOf
 import os
 from flask_sqlalchemy import SQLAlchemy
-from flask_weasyprint import HTML, render_pdf
+# from wkhtmltopdf.main import WKHtmlToPdf
+import pdfkit
+# from flask_weasyprint import HTML, render_pdf
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '7PlzThx'
@@ -72,7 +74,6 @@ def index():
 
 @app.route('/paper/<name>', methods = ['GET', 'POST'])
 def paperView(name):
-
 	paper = Paper.query.get(name)
 	studentz = {i:{'name':student.name, 'student_answers': student.listify(), 'mark': student.mark()} for i, student in enumerate(paper.students)}
 #change start from 0
@@ -194,7 +195,12 @@ def printPaper(name):
 	paper = Paper.query.get(name)
 	studentz = {i:{'name':student.name, 'student_answers': student.listify(), 'mark': student.mark()} for i, student in enumerate(paper.students)}
 	html = render_template('viewStudent.html', students = studentz, answers = paper.listify(), no_of_questions = (paper.no_of_questions, range(paper.no_of_questions)), student_keys = tuple(studentz.keys()))
-	return render_pdf(HTML(string = html))
+	pdf = pdfkit.from_string(html, False)
+	response = make_response(pdf)
+	response.headers['Content-Type'] = 'application/pdf'
+	response.headers['Content-Disposition'] = 'attachment; filename = answers.pdf'
+	return response
+	# return render_pdf(HTML(string = html))
 
 # To do:
 # accept blanks
