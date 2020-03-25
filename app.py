@@ -9,10 +9,7 @@ from reportlab.platypus.tables import Table, TableStyle
 from reportlab.pdfgen import canvas
 from reportlab.lib.colors import black
 from reportlab.lib.styles import getSampleStyleSheet
-# from wkhtmltopdf.main import WKHtmlToPdf
-import pdfkit
 from io import BytesIO
-# from flask_weasyprint import HTML, render_pdf
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '7PlzThx'
@@ -65,7 +62,7 @@ db.create_all()
 class InitializePaper(FlaskForm):
 	name = StringField('Name of paper', validators = [DataRequired(), NoneOf(list(map(lambda x: x.name, Paper.query.all())))])
 	qn = IntegerField('Number of questions in paper', validators = [DataRequired()])
-#pA = StringField('Possible answers') #(possible answers)
+
 	choyce = StringField('Possible answers', validators = [DataRequired()])
 	create = SubmitField('Create')
 
@@ -91,10 +88,6 @@ def paperView(name):
 #note: processed_questions is currently a dictionary in a list(no shit sherlock), where the index of the list is equal to the question number -1, while each possible choice has a corresponding dictionary key, with the value being the amount of occurences of the choice
 	return render_template('paper.html', paper = paper, students = studentz, answers = paper.listify(), processed_questions = processed_questions, range = range, len = len, round = round, no_of_questions = (paper.no_of_questions, range(paper.no_of_questions)), student_keys = tuple(studentz.keys()))
 
-# 	name = StringField('Name of paper', validators = [DataRequired(), NoneOf(list(map(lambda x: x.name, Paper.query.all())))])
-# 	qn = IntegerField('Number of questions in paper', validators = [DataRequired()])
-# #pA = StringField('Possible answers') #(possible answers)
-# 	choyce = StringField('Possible answers', validators = [DataRequired()])
 @app.route('/newPaper', methods = ['GET', 'POST'])
 def newPaper():
 	class InitializePaper(SubmitButton):
@@ -217,7 +210,6 @@ def viewStudent(name, student):
 	response.headers['Content-Disposition'] = 'attachment; filename=somefilename.pdf'
 	return response
 
-
 @app.route('/paper/<name>.pdf')
 def printPaper(name):
 	paper = Paper.query.get(name)
@@ -232,15 +224,5 @@ def printPaper(name):
 	response.headers['Content-Disposition'] = 'attachment; filename=somefilename.pdf'
 	return response
 
-	# return make_response(print_pdf())
-	# paper = Paper.query.get(name)
-	# studentz = {i:{'name':student.name, 'student_answers': student.listify(), 'mark': student.mark()} for i, student in enumerate(paper.students)}
-	# html = render_template('viewStudent.html', students = studentz, answers = paper.listify(), no_of_questions = (paper.no_of_questions, range(paper.no_of_questions)), student_keys = tuple(studentz.keys()))
-	# pdf = pdfkit.from_string(html, False)
-	# response = make_response(pdf)
-	# response.headers['Content-Type'] = 'application/pdf'
-	# response.headers['Content-Disposition'] = 'attachment; filename = answers.pdf'
-	# return response
-	# return render_pdf(HTML(string = html))
-# To do:
-# accept blanks
+if __name__=="__main__":
+	app.run()
