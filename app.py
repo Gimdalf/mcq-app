@@ -4,8 +4,14 @@ from wtforms import StringField, SubmitField, IntegerField
 from wtforms.validators import DataRequired, AnyOf, Length, NoneOf
 import os
 from flask_sqlalchemy import SQLAlchemy
+from reportlab.platypus import SimpleDocTemplate, Paragraph
+from reportlab.platypus.tables import Table, TableStyle
+from reportlab.pdfgen import canvas
+from reportlab.lib.colors import black
+from reportlab.lib.styles import getSampleStyleSheet
 # from wkhtmltopdf.main import WKHtmlToPdf
 import pdfkit
+from io import BytesIO
 # from flask_weasyprint import HTML, render_pdf
 
 app = Flask(__name__)
@@ -183,24 +189,58 @@ def deleteStudent(name, student):
 
 	return render_template('deletePaper.html', form = form, name = student.name)
 
+def render_student(paper, student):
+	per_row = 5
+	style = getSampleStyleSheet()
+		# text = Paragraph(, style['Normal'])
+		# elements.append(text)
+	ans = [['Student name: %s; Mark: %i;'%(student.name, student.mark())],['Q', 'A', 'C', '']*per_row]
+	for i in range(paper.no_of_questions):
+		if i % per_row == 0:
+			ans.append([])
+		stud_ans = student.answers[str(i+1)]
+		pape_ans = paper.answers[str(i+1)]
+		ans[-1].extend((str(i+1), pape_ans, stud_ans, '✓' if stud_ans == pape_ans else '✕'))
+	table = Table(ans, spaceAfter = 20, spaceBefore = 20)
+	table.setStyle(TableStyle([('GRID', (0,0), (-1,-1), 1, black), ('SPAN', (0, 0), (-1, 0)), ('NOSPLIT', (0,0), (-1,-1)), ('TOPPADDING', (0,2),(-1,-1), 3), ('BOTTOMPADDING', (0,2),(-1,-1), 3)]))
+	return table
+
 @app.route('/paper/<name>/<student>.pdf')
 def viewStudent(name, student):
-	student = Student.query.get((student, name))
-	paper = Paper.query.get(name)
-	html = render_template('viewStudent.html', students = {0: {'name':student.name, 'student_answers': student.listify(), 'mark': student.mark()}}, no_of_questions = (paper.no_of_questions, range(paper.no_of_questions)), student_keys=tuple([0]), answers = paper.listify())
-	return render_pdf(HTML(string = html))
+	buffer = BytesIO()
+	doc = SimpleDocTemplate(buffer, topMargin=0, bottomMargin=0)
+	doc.build([render_student(Paper.query.get(name), Student.query.get((student, name)))])
+	pdf = buffer.getvalue()
+	buffer.close()
+	response = make_response(pdf)
+	response.headers['Content-Type'] = 'application/pdf'
+	response.headers['Content-Disposition'] = 'attachment; filename=somefilename.pdf'
+	return response
+
 
 @app.route('/paper/<name>.pdf')
 def printPaper(name):
 	paper = Paper.query.get(name)
-	studentz = {i:{'name':student.name, 'student_answers': student.listify(), 'mark': student.mark()} for i, student in enumerate(paper.students)}
-	html = render_template('viewStudent.html', students = studentz, answers = paper.listify(), no_of_questions = (paper.no_of_questions, range(paper.no_of_questions)), student_keys = tuple(studentz.keys()))
-	pdf = pdfkit.from_string(html, False)
+	elements = [render_student(paper, student) for student in paper.students]
+	buffer = BytesIO()
+	doc = SimpleDocTemplate(buffer, topMargin=0, bottomMargin=0)
+	doc.build(elements)
+	pdf = buffer.getvalue()
+	buffer.close()
 	response = make_response(pdf)
 	response.headers['Content-Type'] = 'application/pdf'
-	response.headers['Content-Disposition'] = 'attachment; filename = answers.pdf'
+	response.headers['Content-Disposition'] = 'attachment; filename=somefilename.pdf'
 	return response
-	# return render_pdf(HTML(string = html))
 
+	# return make_response(print_pdf())
+	# paper = Paper.query.get(name)
+	# studentz = {i:{'name':student.name, 'student_answers': student.listify(), 'mark': student.mark()} for i, student in enumerate(paper.students)}
+	# html = render_template('viewStudent.html', students = studentz, answers = paper.listify(), no_of_questions = (paper.no_of_questions, range(paper.no_of_questions)), student_keys = tuple(studentz.keys()))
+	# pdf = pdfkit.from_string(html, False)
+	# response = make_response(pdf)
+	# response.headers['Content-Type'] = 'application/pdf'
+	# response.headers['Content-Disposition'] = 'attachment; filename = answers.pdf'
+	# return response
+	# return render_pdf(HTML(string = html))
 # To do:
 # accept blanks
