@@ -179,7 +179,6 @@ def deleteStudent(name, student):
 		db.session.delete(student)
 		db.session.commit()
 		return redirect(url_for('paperView', name = name))
-
 	return render_template('deletePaper.html', form = form, name = student.name)
 
 def render_student(paper, student):
@@ -207,7 +206,7 @@ def viewStudent(name, student):
 	buffer.close()
 	response = make_response(pdf)
 	response.headers['Content-Type'] = 'application/pdf'
-	response.headers['Content-Disposition'] = 'attachment; filename=somefilename.pdf'
+	response.headers['Content-Disposition'] = 'attachment; filename=%s_%s.pdf'%(name, student)
 	return response
 
 @app.route('/paper/<name>.pdf')
@@ -221,7 +220,7 @@ def printPaper(name):
 	buffer.close()
 	response = make_response(pdf)
 	response.headers['Content-Type'] = 'application/pdf'
-	response.headers['Content-Disposition'] = 'attachment; filename=somefilename.pdf'
+	response.headers['Content-Disposition'] = 'attachment; filename=%s.pdf'%(name)
 	return response
 
 if __name__=="__main__":

@@ -1,12 +1,12 @@
-<head>
-	<title>Delete {{name}}</title>
-	<meta name = "viewport" content = "width = device-width, initial-scale = 1">
-	<link rel="stylesheet" href="{{url_for('static',filename='css/materialize.css')}}">
-	<script type = "text/javascript"
-		 src = "https://code.jquery.com/jquery-2.1.1.min.js"></script>           
-	<script src = "https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.3/js/materialize.min.js">
-	</script>
-</head>
+{% extends "base.html" %}
+{% block title %} Delete {{ name }} {% endblock %}
+{% block header %}
+	{{ super() }}
+{% endblock %}
+{% set page = "index" %}
+
+{% block body %}
+	{{ super() }}
 
 <div class = "row">
 		<h3>Are you sure you want to delete {{ name }}</h3>
@@ -15,3 +15,5 @@
 			{{ form.button(class="btn") }}
 		</form>
 </div>
+
+{% endblock %}

@@ -1,13 +1,12 @@
-<head>
-	<title>New student</title>
-	<meta name = "viewport" content = "width = device-width, initial-scale = 1">
-	<link rel="stylesheet" href="{{url_for('static',filename='css/materialize.css')}}">
-	<script type = "text/javascript"
-         src = "https://code.jquery.com/jquery-2.1.1.min.js"></script>           
-      <script src = "https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.3/js/materialize.min.js">
-      </script>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %} New student {% endblock %}
+{% block header %}
+	{{ super() }}
+{% endblock %}
+{% set page = "index" %}
+
+{% block body %}
+	{{ super() }}
 	<div class="container">
 		{% if form.errors %}
 		<div class = "section">
@@ -41,4 +40,4 @@
 			<div>
 		</form>
 	</div>
-</body>
+{% endblock %}
