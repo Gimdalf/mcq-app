@@ -21,20 +21,30 @@
 							<a class="col waves-effect waves-light btn-small" href ="{{url_for('viewStudent', name = paper.name, student = students[student_key]['name'])}}">Print</a>
 							<a class="waves-effect waves-light btn-small red right" href = "{{ url_for('deleteStudent', name = paper.name, student = students[student_key]['name']) }}">Delete {{students[student_key]['name']}}</a>
 						</div>
-						<div>
-							<table style="padding: 0px">
-							{% for i in no_of_questions[1] %}
-								{% if (i+1) % 4 == 1 %}
-								<tr class="ans" style="border: 1px solid lightgray">
-								{% endif %}
-									<td class = "ans" style="border-left: 1px solid lightgray">{{i+1}}</td>
-									<td class = "ans">{{students[student_key]['student_answers'][i]}}</td>
-									<td class = "ans">{{answers[i]}}</td>
-									<td class = "ans"style="border-right: 1px solid lightgray"><i class="material-icons">
-									{% if students[student_key]['student_answers'][i] == answers[i] %}check{% else %}close{% endif %}</i></td>
-								{% if (i+1) % 4 == 0 %}
+						<div class="container">
+							<table class="striped responsive-table">
+								<tr>
+									{% for i in range(4) %}
+										<th>Q</th>
+										<th>A</th>
+										<th>C</th>
+										<th></th>
+									{% endfor %}
 								</tr>
-								{% endif %}
+							{% for i in range(no_of_questions[2]) %}
+								<tr style="border: 1 px solid lightgray">
+									{% for j in range(4) %}
+										{% if j * no_of_questions[2] + i + 1 <= no_of_questions[0] %}
+											<th>{{ j * no_of_questions[2] + i + 1}}</th>
+											<td>{{answers[j * no_of_questions[2] + i]}}</td>
+											<td>{{students[student_key]['student_answers'][i][j]}}</td>
+											<td>
+												<i class="material-icons">
+												{% if students[student_key]['student_answers'][i][j] == answers[j * no_of_questions[2] + i] %}check{% else %}close{% endif %}</i>
+											</td>
+										{% endif %}
+									{% endfor %}
+								</tr>
 							{% endfor %}
 							</table>
 						</div>

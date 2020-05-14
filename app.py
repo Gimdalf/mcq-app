@@ -10,6 +10,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.colors import black
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
+from math import ceil
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '7PlzThx'
@@ -78,7 +79,7 @@ def index():
 @app.route('/paper/<name>', methods = ['GET', 'POST'])
 def paperView(name):
 	paper = Paper.query.get(name)
-	studentz = {i:{'name':student.name, 'student_answers': student.listify(), 'mark': student.mark()} for i, student in enumerate(paper.students)}
+	studentz = {i:{'name':student.name, 'student_answers':[student.listify()[j:ceil(paper.no_of_questions/4)*4:ceil(paper.no_of_questions/4)] for j in range(ceil(paper.no_of_questions/4))] + [None for i in range(paper.no_of_questions - (paper.no_of_questions % ceil(paper.no_of_questions/4)))] if paper.no_of_questions % 4 != 0 else [student.listify()[j:ceil(paper.no_of_questions/4)*4:ceil(paper.no_of_questions/4)] for j in range(ceil(paper.no_of_questions/4))], 'mark': student.mark()} for i, student in enumerate(paper.students)}
 #change start from 0
 	processed_questions = [{key: 0 for key in list(paper.choices)} for i in range(1, paper.no_of_questions+1)]
 	for student in paper.students:
@@ -86,7 +87,8 @@ def paperView(name):
 		for i, answer in ((i, student_answers[str(i)]) for i in range(1, paper.no_of_questions + 1)):
 			processed_questions[i-1][answer] += 1
 #note: processed_questions is currently a dictionary in a list(no shit sherlock), where the index of the list is equal to the question number -1, while each possible choice has a corresponding dictionary key, with the value being the amount of occurences of the choice
-	return render_template('paper.html', paper = paper, students = studentz, answers = paper.listify(), processed_questions = processed_questions, range = range, len = len, round = round, no_of_questions = (paper.no_of_questions, range(paper.no_of_questions)), student_keys = tuple(studentz.keys()))
+	print(studentz)
+	return render_template('paper.html', paper = paper, students = studentz, answers = paper.listify(), processed_questions = processed_questions, range = range, len = len, round = round, no_of_questions = (paper.no_of_questions, range(paper.no_of_questions), ceil(paper.no_of_questions/4)), student_keys = tuple(studentz.keys()))
 
 @app.route('/newPaper', methods = ['GET', 'POST'])
 def newPaper():
@@ -142,11 +144,11 @@ def newStudent(name):
 	no_of_questions = paper.no_of_questions
 	setattr(StudentForm, "name", StringField('Name of student', validators = [DataRequired(), NoneOf(list(map(lambda x: x.name, paper.students)))]))
 	for i in range(1, paper.no_of_questions+1):
-		setattr(StudentForm, str(i), StringField("Q{}".format(i), validators =[Length(max=1), AnyOf(merger(paper.choices.lower(), paper.choices.upper()))]))
+		setattr(StudentForm, str(i), StringField("Q{}".format(i), validators =[Length(max=1), AnyOf(merger(paper.choices.lower(), paper.choices.upper()) + [''])]))
 	form = StudentForm()
 	if form.validate_on_submit():
 		#reconversion of student's answers into integer value for storage
-		db.session.add(Student(name = form.name.data, paper_id = name, answers = {key: getattr(form, str(key)).data.upper() for key in range(1, no_of_questions+1)}))
+		db.session.add(Student(name = form.name.data, paper_id = name, answers = {key: getattr(form,str(i)).data.upper() if getattr(form,str(i)).data.upper() != '' else '0' for key in range(1, no_of_questions+1)}))
 		db.session.commit()
 		return redirect(url_for('paperView', name = name))
 	return render_template('createStudent.html', form = form, questions = list(map(lambda x: str(x),range(1, no_of_questions+1))), getattr = getattr, name = paper.name)
@@ -160,12 +162,12 @@ def editStudent(name, student):
 	answers = student.paper.listify()
 	setattr(StudentForm, "name", StringField('Name of student', validators = [DataRequired(), NoneOf(list(filter(lambda x: x != student.name, map(lambda x: x.name, paper.students))))], default = student.name))
 	for i, answer in zip(range(1, paper.no_of_questions+1), student.listify()):
-		setattr(StudentForm, str(i), StringField("Q{}".format(i), validators =[AnyOf(merger(paper.choices.lower(), paper.choices.upper())), Length(max=1)], default = answer))
+		setattr(StudentForm, str(i), StringField("Q{}".format(i), validators =[AnyOf(merger(paper.choices.lower(), paper.choices.upper()) + ['']), Length(max=1)], default = answer))
 	form = StudentForm()
 #Edit student answers doesn't work
 	if form.validate_on_submit():
 		db.session.delete(student)
-		db.session.add(Student(name = form.name.data, paper_id = name, answers = {key: getattr(form,str(i)).data.upper() for key in range(1, paper.no_of_questions+1)}))
+		db.session.add(Student(name = form.name.data, paper_id = name, answers = {key: getattr(form,str(i)).data.upper() if getattr(form,str(i)).data.upper() != '' else '0' for key in range(1, paper.no_of_questions+1)}))
 		db.session.commit()
 		return redirect(url_for('paperView', name = name))
 	return render_template('createStudent.html', form = form, name = name, questions = list(map(lambda x: str(x),range(1, paper.no_of_questions+1))), getattr = getattr)
@@ -183,16 +185,17 @@ def deleteStudent(name, student):
 
 def render_student(paper, student):
 	per_row = 5
+	per_column = ceil(paper.no_of_questions/per_row)
 	style = getSampleStyleSheet()
 		# text = Paragraph(, style['Normal'])
 		# elements.append(text)
-	ans = [['Student name: %s; Mark: %i;'%(student.name, student.mark())],['Q', 'A', 'C', '']*per_row]
+	ans = [['Student name: %s; Mark: %i/%i;'%(student.name, student.mark(), paper.no_of_questions)], ['Q', 'A', 'C', '']*per_row] + [[] for i in range(per_column)]
+	print(ans)
 	for i in range(paper.no_of_questions):
-		if i % per_row == 0:
-			ans.append([])
+		print(i)
 		stud_ans = student.answers[str(i+1)]
 		pape_ans = paper.answers[str(i+1)]
-		ans[-1].extend((str(i+1), pape_ans, stud_ans, '✓' if stud_ans == pape_ans else '✕'))
+		ans[2 + i % per_column].extend((str(i+1), pape_ans, stud_ans, '✓' if stud_ans == pape_ans else '✕'))
 	table = Table(ans, spaceAfter = 20, spaceBefore = 20)
 	table.setStyle(TableStyle([('GRID', (0,0), (-1,-1), 1, black), ('SPAN', (0, 0), (-1, 0)), ('NOSPLIT', (0,0), (-1,-1)), ('TOPPADDING', (0,2),(-1,-1), 3), ('BOTTOMPADDING', (0,2),(-1,-1), 3)]))
 	return table

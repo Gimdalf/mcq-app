@@ -8,11 +8,11 @@
 {% block body %}
 	{{ super() }}
 
+<h3>Are you sure you want to delete {{ name }}</h3>
 <div class = "row">
-		<h3>Are you sure you want to delete {{ name }}</h3>
-		<a class = "btn "href = "{{ url_for('index') }}">No</a>
 		<form method = "POST">
-			{{ form.button(class="btn") }}
+		<a class = "btn"href = "{{ url_for('index') }}">No</a>
+			{{ form.button(class="btn red") }}
 		</form>
 </div>
 
